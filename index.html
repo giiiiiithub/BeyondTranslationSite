@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeyondTranslation - 英语句法分析助手</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="container hero-split">
+    <div class="hero-left">
+      <h1>BeyondTranslation</h1>
+      <p class="hero-tagline">把英文句子的骨架、血肉、脉络，一层层拆给你看。</p>
+      <div class="hero-stats">
+        <div class="stat"><strong>AI 大模型</strong><span>智能拆解语义</span></div>
+        <div class="stat"><strong>持续追问</strong><span>AI 私教问答</span></div>
+        <div class="stat"><strong>自动标注</strong><span>浏览即学</span></div>
+        <div class="stat"><strong>鼠标悬浮</strong><span>查看句法成分</span></div>
+      </div>
+      <a href="#pricing" class="hero-cta">查看套餐</a>
+    </div>
+    <div class="hero-right">
+      <div class="hero-img">
+        <span>侧边栏截图</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 定价 -->
+<section class="section" id="pricing">
+  <div class="container">
+    <h2>选择套餐</h2>
+    <p class="section-desc">购买功能授权，付费后所有功能无限使用。</p>
+    <div class="pricing-grid" id="pricingGrid">
+      <!-- JS 动态渲染 -->
+    </div>
+    <p class="disclaimer">* 套餐仅包含扩展功能授权，<strong>不含 AI 分析服务费用</strong>。AI 服务需自行配置 DeepSeek API Key（<a href="https://platform.deepseek.com" target="_blank" rel="noopener">免费注册</a>，按量极低）。</p>
+  </div>
+</section>
+
+<!-- 购买流程区 -->
+<section class="section hidden" id="purchaseSection">
+  <div class="container">
+    <div class="purchase-panel" id="purchasePanel"></div>
+  </div>
+</section>
+
+<!-- 功能 -->
+<section class="section section-alt" id="features">
+  <div class="container">
+    <h2>功能</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>句法成分分析</h3>
+        <p>主语、谓语、宾语、定语、状语……层层标注，一目了然。</p>
+      </div>
+      <div class="feature-card">
+        <h3>精准翻译</h3>
+        <p>每个句子成分逐一翻译，不是整句机翻。</p>
+      </div>
+      <div class="feature-card">
+        <h3>词汇深度学习</h3>
+        <p>自动提取重点词汇，近义辨析 + 词源拆解 + 常见搭配。</p>
+      </div>
+      <div class="feature-card">
+        <h3>同类例句</h3>
+        <p>结构相近的例句，举一反三，真正掌握句型。</p>
+      </div>
+      <div class="feature-card">
+        <h3>持续追问</h3>
+        <p>分析完就追问，像私教一样。</p>
+      </div>
+      <div class="feature-card">
+        <h3>网页自动标注</h3>
+        <p>浏览英文网站自动标注成分。<strong>付费功能</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 安装 -->
+<section class="section" id="install">
+  <div class="container">
+    <h2>安装步骤</h2>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body"><h3>下载扩展</h3><p>从官网下载 <code>.crx</code> 文件（或 <code>.zip</code> 解压后手动加载）。</p></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body"><h3>安装扩展</h3><p>打开 Chrome，地址栏输入 <code>chrome://extensions</code>，开启「开发者模式」，拖入 crx 文件。</p></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body"><h3>配置 API Key</h3><p>点击扩展图标 → 设置 → 填入 DeepSeek API Key。</p></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><h3>输入激活码</h3><p>在扩展中输入购买后获得的激活码，解锁付费功能。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>BeyondTranslation · 英语句法分析助手</p>
+    <p class="footer-sub">
+      <a href="#privacy" id="privacyToggle">隐私声明</a>
+      &nbsp;·&nbsp;
+      <span>联系我们：doooooodle@163.com</span>
+    </p>
+  </div>
+</footer>
+
+<div id="privacyModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);justify-content:center;align-items:center">
+  <div style="background:#fff;max-width:600px;padding:32px;border-radius:10px;max-height:80vh;overflow-y:auto;font-size:13px;line-height:1.8;color:#555">
+    <h3 style="color:#1a1a2e;margin-bottom:12px">隐私声明</h3>
+    <p>BeyondTranslation 是一款 Chrome 浏览器扩展，所有数据处理均在用户本地浏览器中完成：</p>
+    <ul style="padding-left:16px;margin:8px 0">
+      <li>用户选中的英文文本仅用于调用用户自行配置的 AI 模型接口，不经过我们的服务器。</li>
+      <li>激活码验证通过加密 HTTPS 请求完成，仅传输激活码及设备标识用于验证有效期。</li>
+      <li>不收集或存储用户的浏览历史、网页内容、个人信息。</li>
+      <li>不向第三方出售或共享任何用户数据。</li>
+    </ul>
+    <p style="margin-top:8px">如有疑问，请联系：doooooodle@163.com</p>
+    <button onclick="document.getElementById('privacyModal').style.display='none'" style="margin-top:16px;padding:6px 20px;border-radius:4px;background:#0f3460;color:#fff;border:none;cursor:pointer;font-size:13px">关闭</button>
+  </div>
+</div>
+
+<script>
+document.getElementById('privacyToggle').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('privacyModal').style.display = 'flex';
+});
+</script>
+
+<script src="js/app.js"></script>
+</body>
+</html>
