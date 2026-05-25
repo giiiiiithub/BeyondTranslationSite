@@ -129,9 +129,16 @@
 </div>
 
 <script>
+function showPrivacyModal() {
+  document.getElementById('privacyModal').style.display = 'flex';
+}
 document.getElementById('privacyToggle').addEventListener('click', function(e) {
   e.preventDefault();
-  document.getElementById('privacyModal').style.display = 'flex';
+  showPrivacyModal();
+});
+if (location.hash === '#privacy') showPrivacyModal();
+window.addEventListener('hashchange', function() {
+  if (location.hash === '#privacy') showPrivacyModal();
 });
 </script>
 
