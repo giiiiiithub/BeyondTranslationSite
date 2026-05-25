@@ -1,12 +1,5 @@
 (function () {
-  // ── 配置 ──────────────────────────────────────
-  var API_BASE = "https://beyond-nslation-umvdiweytv.cn-hangzhou.fcapp.run";
-  var ADMIN_TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"; // 和 FC 环境变量 ADMIN_TOKEN 一致
-  var PAYMENT_MODE = "manual"; // "manual"=微信二维码, "auto"=FC后端自动发码
-
   // ── 套餐定义 ──────────────────────────────────
-  // 按 token 量计费。free 为每日免费配额，paid 为一次性购买的 token 包。
-  // 实际购买后由管理员手动生成激活码，通过微信发送给用户。
   var PLANS = [
     {
       type: "free", name: "免费版", desc: "每日 1000 Token",
@@ -61,7 +54,6 @@
   var purchaseSection = document.getElementById("purchaseSection");
   var purchasePanel = document.getElementById("purchasePanel");
   var toastEl = null;
-  var pollTimer = 0;
 
   // ── 工具 ──────────────────────────────────────
   function showToast(msg) {
@@ -78,16 +70,6 @@
 
   function scrollTo(el) {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  async function api(path, method, bodyObj) {
-    var opts = { method: method, headers: { "Content-Type": "application/json" } };
-    if (bodyObj) opts.body = JSON.stringify(bodyObj);
-    var resp = await fetch(API_BASE + path, opts);
-    var data = await resp.json();
-    // FC 统一响应格式 { code, data }
-    if (data.code !== "000200") throw new Error(data.msg || ("请求失败：" + data.code));
-    return data.data;
   }
 
   // ── 渲染定价卡片 ──────────────────────────────
@@ -161,35 +143,8 @@
     scrollTo(purchaseSection);
 
     document.getElementById("btnConfirm").addEventListener("click", function () {
-      createOrder(plan);
-    });
-  }
-
-  // ── 调用后端创建订单 ──────────────────────────
-  async function createOrder(plan) {
-    // 手动模式：直接展示微信二维码
-    if (PAYMENT_MODE === "manual") {
       showManualPayment(plan);
-      return;
-    }
-
-    // 自动模式：调后端 API
-    purchasePanel.innerHTML =
-      '<div style="text-align:center;padding:40px">' +
-      '<div class="spinner"></div><p style="color:#666;margin-top:12px">正在创建订单...</p>' +
-      '</div>';
-
-    try {
-      var tokenAmount = plan.tokenQuota / 1000000;
-      var result = await api("/api/create-order", "POST", { plan_type: "token", token_amount: tokenAmount });
-      showQRCode(plan, result);
-    } catch (err) {
-      purchasePanel.innerHTML =
-        '<h3>创建订单失败</h3>' +
-        '<p style="color:#d63031;margin:16px 0">' + (err.message || "未知错误") + '</p>' +
-        '<button class="btn btn-secondary" id="btnRetry">重试</button>';
-      document.getElementById("btnRetry").addEventListener("click", function () { showPurchasePanel(plan); });
-    }
+    });
   }
 
   // ── 手动支付（微信二维码） ─────────────────────
@@ -207,83 +162,6 @@
       '<p style="font-size:13px;color:#555">加微信后发送 <strong>' + plan.name + '</strong> 并转账 <strong>&yen;' + plan.price + '</strong></p>' +
       '<p style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:4px;font-size:13px;font-weight:600;margin-top:6px">激活码将通过微信发送给您</p>' +
       '<p style="font-size:11px;color:#bbb;margin-top:8px">联系邮箱：doooooodle@163.com</p>';
-  }
-
-  // ── 展示二维码 + 轮询支付状态 ──────────────────
-  function showQRCode(plan, result) {
-    var orderId = result.order_id;
-    var codeUrl = result.code_url;
-    var amount = (result.amount / 100).toFixed(0);
-
-    var qrSrc = codeUrl;
-
-    purchasePanel.innerHTML =
-      '<h3>微信扫码支付</h3>' +
-      '<div class="order-summary">' +
-      '<div class="row"><span>套餐</span><span>' + plan.name + '</span></div>' +
-      '<div class="row"><span>金额</span><span>&yen;' + amount + '.00</span></div>' +
-      '<div class="row"><span>订单号</span><span style="font-size:12px">' + orderId + '</span></div>' +
-      '</div>' +
-      '<div class="qrcode-wrapper">' +
-      '<img src="' + qrSrc + '" alt="支付二维码" style="width:240px;height:240px;border:1px solid #eee;border-radius:8px">' +
-      '<p class="qrcode-hint">请用微信扫一扫付款</p>' +
-      '<p class="countdown" id="statusText">等待支付中...</p>' +
-      '</div>' +
-      '<button class="btn btn-secondary" id="btnMockPay">模拟支付（测试用）</button>' +
-      '<button class="btn btn-secondary" id="btnCancel" style="margin-left:8px">取消</button>';
-
-    document.getElementById("btnMockPay").addEventListener("click", function () {
-      mockPay(orderId);
-    });
-
-    document.getElementById("btnCancel").addEventListener("click", function () {
-      clearInterval(pollTimer);
-      purchaseSection.classList.add("hidden");
-    });
-
-    startPolling(orderId, plan);
-  }
-
-  // ── 轮询 ──────────────────────────────────────
-  function startPolling(orderId, plan) {
-    var attempts = 0;
-    var maxAttempts = 300; // 15 分钟
-
-    pollTimer = setInterval(async function () {
-      attempts++;
-      try {
-        var data = await api("/api/order-status/" + orderId, "GET");
-        var statusEl = document.getElementById("statusText");
-        if (statusEl) {
-          statusEl.textContent = "等待支付中...（已轮询 " + attempts + " 次）";
-        }
-        if (data.status === "paid" && data.activation_code) {
-          clearInterval(pollTimer);
-          showActivationResult(plan, data.activation_code);
-        }
-        if (attempts >= maxAttempts) {
-          clearInterval(pollTimer);
-          if (statusEl) statusEl.textContent = "支付超时，请重新下单";
-        }
-      } catch (err) {
-        console.warn("poll error:", err.message);
-      }
-    }, 3000);
-  }
-
-  // ── Mock 支付 ─────────────────────────────────
-  async function mockPay(orderId) {
-    var el = document.getElementById("statusText");
-    if (el) el.textContent = "正在模拟支付...";
-    try {
-      await api("/api/mock-payment", "POST", {
-        order_id: orderId,
-        admin_token: ADMIN_TOKEN
-      });
-      if (el) el.textContent = "模拟支付成功！";
-    } catch (err) {
-      if (el) el.textContent = "模拟支付失败：" + (err.message || "");
-    }
   }
 
   // ── 展示激活码 ───────────────────────────────
