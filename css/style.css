@@ -44,11 +44,22 @@ body{
 .hero-cta-dl:hover{background:#1a1a2e}
 .hero-actions{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
 .hero-install{width:100%;margin-top:8px;font-size:11px;color:#667;line-height:1.5}
-.hero-img{
-  width:240px;height:160px;border-radius:10px;background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;
-  justify-content:center;color:#8892b0;font-size:12px
+.hero-carousel{
+  position:relative;width:300px;overflow:hidden;border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)
 }
+.carousel-slides{display:flex;transition:transform .5s ease}
+.carousel-img{width:100%;height:auto;display:block;flex-shrink:0}
+.carousel-dots{
+  display:flex;justify-content:center;gap:6px;padding:8px 0 10px;
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(0,0,0,.5))
+}
+.dot{
+  width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4);
+  cursor:pointer;transition:background .2s
+}
+.dot.active{background:#fff}
 
 /* sections */
 .section{padding:48px 24px}
@@ -157,6 +168,7 @@ body{
   .hero-tagline{margin-left:auto;margin-right:auto}
   .hero-stats{justify-content:center}
   .hero-right{display:none}
+  .hero-carousel{width:auto}
 }
 @media(max-width:640px){
   .hero{padding:36px 16px 36px}
