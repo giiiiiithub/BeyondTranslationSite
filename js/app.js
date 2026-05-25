@@ -201,7 +201,7 @@
       '<div class="row total"><span>价格</span><span>&yen;' + plan.price + '.00</span></div>' +
       '</div>' +
       '<div class="qrcode-wrapper">' +
-      '<img src="assets/wechat-qr.png" alt="微信扫码" style="width:180px;height:180px;border:1px solid #eee;border-radius:8px">' +
+      '<img src="assets/wechat-qr.png" alt="微信扫码" style="width:180px;height:auto;border:1px solid #eee;border-radius:8px">' +
       '<p class="qrcode-hint">扫码加微信，备注套餐名称</p>' +
       '</div>' +
       '<p style="font-size:13px;color:#555">加微信后发送 <strong>' + plan.name + '</strong> 并转账 <strong>&yen;' + plan.price + '</strong></p>' +
