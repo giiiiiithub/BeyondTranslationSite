@@ -5,49 +5,52 @@
   var PAYMENT_MODE = "manual"; // "manual"=微信二维码, "auto"=FC后端自动发码
 
   // ── 套餐定义 ──────────────────────────────────
+  // 按 token 量计费。free 为每日免费配额，paid 为一次性购买的 token 包。
+  // 实际购买后由管理员手动生成激活码，通过微信发送给用户。
   var PLANS = [
     {
-      type: "free", name: "免费版", desc: "尝鲜体验", price: "0",
+      type: "free", name: "免费版", desc: "每日 1000 Token",
+      price: "0",
       features: [
         { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "选中英文 → 右键分析" },
         { icon: "&#x1F4AC;", text: "持续追问", check: true, tip: "针对分析结果继续提问" },
-        { icon: "&#x26A1;", text: "网页自动标注", check: "limited", hint: "50句/天", tip: "浏览网页自动标注句子成分" }
+        { icon: "&#x26A1;", text: "网页自动标注", check: "limited", hint: "每日 1000 Token", tip: "Token 耗尽后第二天恢复" }
       ],
       paid: false
     },
     {
-      type: "weekly", name: "周卡", desc: "7天全功能", price: "8", unit: "周",
+      type: "token-1m", name: "基础包", desc: "1M Token",
+      price: "5", unit: "1M Token",
+      tokenQuota: 1000000,
       features: [
-        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，不限量" },
+        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，按 token 消耗" },
         { icon: "&#x1F4AC;", text: "持续追问", check: true, tip: "随时追问，深度学习" },
-        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" }
+        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" },
+        { icon: "&#x1F4B0;", text: "不限时间", check: true, tip: "Token 用完为止，无有效期" }
       ],
       paid: true
     },
     {
-      type: "monthly", name: "月度", desc: "每月续费", price: "15", unit: "月",
+      type: "token-5m", name: "畅享包", desc: "5M Token · 省 20%",
+      price: "20", unit: "5M Token",
+      tokenQuota: 5000000,
       features: [
-        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，不限量" },
+        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，按 token 消耗" },
         { icon: "&#x1F4AC;", text: "持续追问", check: true, tip: "随时追问，深度学习" },
-        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" }
+        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" },
+        { icon: "&#x1F4B0;", text: "不限时间", check: true, tip: "Token 用完为止，无有效期" }
       ],
       paid: true
     },
     {
-      type: "quarterly", name: "季度", desc: "月价 8 折", price: "36", unit: "季",
+      type: "token-100m", name: "专业包", desc: "100M Token · 省 40%",
+      price: "300", unit: "100M Token",
+      tokenQuota: 100000000,
       features: [
-        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，不限量" },
+        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，按 token 消耗" },
         { icon: "&#x1F4AC;", text: "持续追问", check: true, tip: "随时追问，深度学习" },
-        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" }
-      ],
-      paid: true
-    },
-    {
-      type: "yearly", name: "年度", desc: "月价 6 折", price: "119", unit: "年",
-      features: [
-        { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "右键分析，不限量" },
-        { icon: "&#x1F4AC;", text: "持续追问", check: true, tip: "随时追问，深度学习" },
-        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" }
+        { icon: "&#x26A1;", text: "网页自动标注", check: true, tip: "浏览英文网站自动标注" },
+        { icon: "&#x1F4B0;", text: "不限时间", check: true, tip: "Token 用完为止，无有效期" }
       ],
       paid: true
     }
@@ -82,8 +85,9 @@
     if (bodyObj) opts.body = JSON.stringify(bodyObj);
     var resp = await fetch(API_BASE + path, opts);
     var data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || ("HTTP " + resp.status));
-    return data;
+    // FC 统一响应格式 { code, data }
+    if (data.code !== "000200") throw new Error(data.msg || ("请求失败：" + data.code));
+    return data.data;
   }
 
   // ── 渲染定价卡片 ──────────────────────────────
@@ -145,10 +149,10 @@
   // ── 购买面板 ──────────────────────────────────
   function showPurchasePanel(plan) {
     purchasePanel.innerHTML =
-      '<h3>确认订单</h3>' +
+      '<h3>确认购买</h3>' +
       '<div class="order-summary">' +
-      '<div class="row"><span>套餐</span><span>' + plan.name + '会员</span></div>' +
-      '<div class="row"><span>价格</span><span>&yen;' + plan.price + '/' + plan.unit + '</span></div>' +
+      '<div class="row"><span>套餐</span><span>' + plan.name + '</span></div>' +
+      '<div class="row"><span>Token</span><span>' + (plan.tokenQuota / 1000000) + 'M</span></div>' +
       '<div class="row total"><span>应付</span><span>&yen;' + plan.price + '.00</span></div>' +
       '</div>' +
       '<button class="btn btn-primary" id="btnConfirm">确认支付</button>';
@@ -176,7 +180,8 @@
       '</div>';
 
     try {
-      var result = await api("/api/create-order", "POST", { plan_type: plan.type });
+      var tokenAmount = plan.tokenQuota / 1000000;
+      var result = await api("/api/create-order", "POST", { plan_type: "token", token_amount: tokenAmount });
       showQRCode(plan, result);
     } catch (err) {
       purchasePanel.innerHTML =
@@ -190,13 +195,17 @@
   // ── 手动支付（微信二维码） ─────────────────────
   function showManualPayment(plan) {
     purchasePanel.innerHTML =
-      '<h3>' + plan.name + '会员 · &yen;' + plan.price + '/' + plan.unit + '</h3>' +
-      '<div class="qrcode-wrapper">' +
-      '<img src="assets/wechat-qr.png" alt="微信扫码" style="border:1px solid #eee;border-radius:8px">' +
-      '<p class="qrcode-hint">扫码加微信</p>' +
+      '<h3>' + plan.name + ' · &yen;' + plan.price + '</h3>' +
+      '<div class="order-summary" style="text-align:left;margin-top:12px">' +
+      '<div class="row"><span>Token</span><span>' + (plan.tokenQuota / 1000000) + 'M</span></div>' +
+      '<div class="row total"><span>价格</span><span>&yen;' + plan.price + '.00</span></div>' +
       '</div>' +
-      '<p style="font-size:13px;color:#555">转账 <strong>&yen;' + plan.price + '</strong>，备注「<strong>' + plan.name + '会员</strong>」</p>' +
-      '<p style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:4px;font-size:13px;font-weight:600;margin-top:6px">激活码将通过微信发送</p>' +
+      '<div class="qrcode-wrapper">' +
+      '<img src="assets/wechat-qr.png" alt="微信扫码" style="width:180px;height:180px;border:1px solid #eee;border-radius:8px">' +
+      '<p class="qrcode-hint">扫码加微信，备注套餐名称</p>' +
+      '</div>' +
+      '<p style="font-size:13px;color:#555">加微信后发送 <strong>' + plan.name + '</strong> 并转账 <strong>&yen;' + plan.price + '</strong></p>' +
+      '<p style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:4px;font-size:13px;font-weight:600;margin-top:6px">激活码将通过微信发送给您</p>' +
       '<p style="font-size:11px;color:#bbb;margin-top:8px">联系邮箱：doooooodle@163.com</p>';
   }
 
@@ -206,13 +215,12 @@
     var codeUrl = result.code_url;
     var amount = (result.amount / 100).toFixed(0);
 
-    // code_url 已经是 qrserver 格式的二维码链接，直接渲染
     var qrSrc = codeUrl;
 
     purchasePanel.innerHTML =
       '<h3>微信扫码支付</h3>' +
       '<div class="order-summary">' +
-      '<div class="row"><span>套餐</span><span>' + plan.name + '会员</span></div>' +
+      '<div class="row"><span>套餐</span><span>' + plan.name + '</span></div>' +
       '<div class="row"><span>金额</span><span>&yen;' + amount + '.00</span></div>' +
       '<div class="row"><span>订单号</span><span style="font-size:12px">' + orderId + '</span></div>' +
       '</div>' +
@@ -224,7 +232,6 @@
       '<button class="btn btn-secondary" id="btnMockPay">模拟支付（测试用）</button>' +
       '<button class="btn btn-secondary" id="btnCancel" style="margin-left:8px">取消</button>';
 
-    // 模拟支付按钮
     document.getElementById("btnMockPay").addEventListener("click", function () {
       mockPay(orderId);
     });
@@ -234,7 +241,6 @@
       purchaseSection.classList.add("hidden");
     });
 
-    // 轮询订单状态
     startPolling(orderId, plan);
   }
 
@@ -270,7 +276,7 @@
     var el = document.getElementById("statusText");
     if (el) el.textContent = "正在模拟支付...";
     try {
-      var data = await api("/api/mock-payment", "POST", {
+      await api("/api/mock-payment", "POST", {
         order_id: orderId,
         admin_token: ADMIN_TOKEN
       });
@@ -287,7 +293,7 @@
       '<div class="activation-result">' +
       '<p style="color:#666;font-size:14px;margin-bottom:8px">您的激活码：</p>' +
       '<div class="activation-code">' + code + '</div>' +
-      '<p style="color:#666;font-size:13px;margin-top:4px">' + plan.name + '会员 · 有效期自激活之日起计算</p>' +
+      '<p style="color:#666;font-size:13px;margin-top:4px">' + plan.name + ' · ' + (plan.tokenQuota / 1000000) + 'M Token</p>' +
       '</div>' +
       '<button class="btn btn-primary btn-copy" id="btnCopy">复制激活码</button>' +
       '<p style="font-size:11px;color:#999;margin-top:6px">请妥善保存激活码，如需找回请联系 doooooodle@163.com</p>' +
@@ -296,7 +302,7 @@
       '<div style="font-size:12px;color:#555;line-height:1.8">' +
         '<div style="margin-bottom:6px">1️⃣ 复制上方激活码</div>' +
         '<div style="margin-bottom:6px">2️⃣ 浏览器右上角点击 BeyondTranslation 图标 → 打开侧边栏</div>' +
-        '<div style="margin-bottom:6px">3️⃣ 侧边栏顶部点击「输入激活码」→ 粘贴 → 确认 → 刷新页面</div>' +
+        '<div style="margin-bottom:6px">3️⃣ 侧边栏顶部输入激活码 → 确认</div>' +
       '</div>' +
       '</div>';
 
