@@ -28,9 +28,9 @@
     <div class="hero-right">
       <div class="hero-carousel">
         <div class="carousel-slides" id="carouselSlides">
-          <img src="assets/screenshot-1.png" alt="截图 1" class="carousel-img">
-          <img src="assets/screenshot-2.png" alt="截图 2" class="carousel-img">
-          <img src="assets/screenshot-3.png" alt="截图 3" class="carousel-img">
+          <img src="assets/screenshot-1.jpg" alt="截图 1" class="carousel-img">
+          <img src="assets/screenshot-2.jpg" alt="截图 2" class="carousel-img">
+          <img src="assets/screenshot-3.jpg" alt="截图 3" class="carousel-img">
         </div>
         <div class="carousel-dots" id="carouselDots">
           <span class="dot active"></span>
@@ -45,12 +45,10 @@
 <!-- 定价 -->
 <section class="section" id="pricing">
   <div class="container">
-    <h2>选择套餐</h2>
-    <p class="section-desc">按量计费，购买 Token 后不限使用时间，用完为止。</p>
     <div class="pricing-grid" id="pricingGrid">
       <!-- JS 动态渲染 -->
     </div>
-    <p class="disclaimer">* Token 用于 AI 分析服务（默认 DeepSeek），每次分析消耗一定 Token。免费用户每日 100000 Token 额度。</p>
+    <p class="disclaimer">* Token 用于 AI 分析服务，每次分析消耗一定 Token。免费用户每日 100000 Token 额度。</p>
   </div>
 </section>
 
@@ -137,6 +135,12 @@
   </div>
 </div>
 
+<div class="lightbox" id="lightbox">
+  <button class="lb-btn lb-prev">‹</button>
+  <img src="" alt="放大查看">
+  <button class="lb-btn lb-next">›</button>
+</div>
+
 <script>
 function showPrivacyModal() {
   document.getElementById('privacyModal').style.display = 'flex';
@@ -168,6 +172,40 @@ window.addEventListener('hashchange', function() {
 
   dots.forEach(function(dot, i) {
     dot.addEventListener('click', function() { goTo(i); resetTimer(); });
+  });
+
+  // 点击图片放大
+  var imgs = slides.querySelectorAll('.carousel-img');
+  var lb = document.getElementById('lightbox');
+  var lbImg = lb.querySelector('img');
+  imgs.forEach(function(img) {
+    img.addEventListener('click', function() {
+      lbImg.src = this.src;
+      lb.classList.add('show');
+    });
+  });
+  lb.addEventListener('click', function() { this.classList.remove('show'); });
+
+  // 左右箭头导航
+  var lbPrev = lb.querySelector('.lb-prev');
+  var lbNext = lb.querySelector('.lb-next');
+  function lbNav(dir) {
+    goTo((current + dir + dots.length) % dots.length);
+    lbImg.src = imgs[current].src;
+  }
+  lbPrev.addEventListener('click', function(e) { e.stopPropagation(); lbNav(-1); });
+  lbNext.addEventListener('click', function(e) { e.stopPropagation(); lbNav(1); });
+  document.addEventListener('keydown', function(e) {
+    if (!lb.classList.contains('show')) return;
+    if (e.key === 'ArrowLeft') {
+      goTo((current - 1 + dots.length) % dots.length);
+      lbImg.src = imgs[current].src;
+    } else if (e.key === 'ArrowRight') {
+      goTo((current + 1) % dots.length);
+      lbImg.src = imgs[current].src;
+    } else if (e.key === 'Escape') {
+      lb.classList.remove('show');
+    }
   });
 
   function next() { goTo((current + 1) % dots.length); }
