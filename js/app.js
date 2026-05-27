@@ -2,12 +2,12 @@
   // ── 套餐定义 ──────────────────────────────────
   var PLANS = [
     {
-      type: "free", name: "免费版", desc: "每日 100000 Token",
+      type: "free", name: "免费版", desc: "新用户 500000 Token",
       price: "0",
       features: [
         { icon: "&#x1F50D;", text: "手动分析", check: true, tip: "选中英文 → 右键分析" },
         { icon: "&#x1F4AC;", text: "持续追问", check: true, tip: "针对分析结果继续提问" },
-        { icon: "&#x26A1;", text: "网页自动标注", check: "limited", hint: "每日 100000 Token", tip: "Token 耗尽后第二天恢复" }
+        { icon: "&#x26A1;", text: "网页自动标注", check: "limited", hint: "500000 Token", tip: "一次性额度，用完即止" }
       ],
       paid: false
     },
